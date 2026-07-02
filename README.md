@@ -1,5 +1,6 @@
 # 🍰 Postres Laura — Sistema de Gestión
-
+ FALTA SUBIR EL ARCHIVO VENDOR AL REPOSITORIO 
+ The vendor file still needs to be uploaded to the repository.
 
 Sistema web desarrollado en **Laravel 11** para la gestión integral de un emprendimiento de repostería: inventario, ventas, gastos, empleados y reportes exportables. Incluye componente **Kotlin** para estadísticas avanzadas.
 

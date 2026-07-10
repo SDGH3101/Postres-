@@ -1,9 +1,9 @@
 # 🍰 Postres Laura — Sistema de Gestión
  FALTA SUBIR EL ARCHIVO VENDOR AL REPOSITORIO 
- The vendor file still needs to be uploaded to the repository.
 
-Sistema web desarrollado en **Laravel 11** para la gestión integral de un emprendimiento de repostería: inventario, ventas, gastos, empleados y reportes exportables. Incluye componente **Kotlin** para estadísticas avanzadas.
+ ESTOS BRANCH SON PARA EVIDENCIAR EL TRABAJO SCRUM 
 
+Sistema web desarrollado en **Laravel 11** para la gestión integral de un emprendimiento de repostería: inventario, ventas, gastos, empleados y reportes exportables. 
 ---
 
 ## 🚀 Instalación
@@ -24,21 +24,10 @@ php artisan key:generate
 
 # 5. Migrar y poblar datos de prueba
 php artisan migrate --seed
-
 # 6. Iniciar servidor de desarrollo
 php artisan serve
 # → http://localhost:8000
 ```
-
-## 🧑‍💻 Usuarios de prueba
-
-| Correo | Contraseña | Rol |
-|--------|-----------|-----|
-| laura@postres.com | laura123 | Emprendedor (admin) |
-| david@postres.com | david456 | Empleado |
-| maria@email.com   | maria789 | Cliente |
-
----
 
 ## 🔌 API REST — Endpoints
 
@@ -68,23 +57,6 @@ GET    /api/v1/kotlin/health      Estado del servicio Kotlin
 
 ---
 
-## 🧪 Componente Kotlin( por el momento no se va disponer de un componente kotlin, por lo tanto se debera ingnorar esto)
-
-Microservicio independiente que calcula estadísticas avanzadas de ventas consultando la BD MySQL y las expone en JSON para ser consumidas por Laravel.
-
-```bash
-# Compilar (requiere kotlinc + mysql-connector-java en classpath)
-kotlinc kotlin/StatsService.kt -include-runtime -d kotlin/stats.jar
-
-# Ejecutar (puerto 8081)
-java -jar kotlin/stats.jar
-
-# Verificar desde Laravel
-curl http://localhost:8000/api/v1/kotlin/stats
-```
-
----
-
 ## 🗂️ Estructura del proyecto
 
 ```
@@ -106,24 +78,4 @@ postres/
 └── public/css/app.css           # Estilos personalizados
 ```
 
----
 
-## 📋 Control de Versiones (Git)
-
-```bash
-git init
-git add .
-git commit -m "feat: inicializar proyecto Laravel Postres Laura SENA 228118"
-git commit -m "feat: autenticación y gestión de sesiones por roles"
-git commit -m "feat: CRUD completo de productos, usuarios y gastos"
-git commit -m "feat: API REST endpoints con GET POST PUT DELETE"
-git commit -m "feat: reportes PDF y exportación CSV/Excel"
-git commit -m "feat: integración componente Kotlin StatsService"
-git commit -m "feat: vistas Blade completas - dashboard, empleados, reportes"
-git commit -m "fix: migraciones, seeders y archivos de arranque Laravel 11"
-```
-
----
-
-**Tecnologías:** PHP 8.2 · Laravel 11 · MySQL · Kotlin · DomPDF · Blade
-**SENA · Centro de Servicios Financieros · Regional Distrito Capital**

@@ -68,7 +68,7 @@ GET    /api/v1/kotlin/health      Estado del servicio Kotlin
 
 ---
 
-## 🧪 Componente Kotlin
+## 🧪 Componente Kotlin( por el momento no se va disponer de un componente kotlin, por lo tanto se debera ingnorar esto)
 
 Microservicio independiente que calcula estadísticas avanzadas de ventas consultando la BD MySQL y las expone en JSON para ser consumidas por Laravel.
 

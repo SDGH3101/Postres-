@@ -65,26 +65,6 @@ GET    /api/v1/stats              KPIs del sistema
 GET    /api/v1/kotlin/stats       Estadísticas calculadas por Kotlin
 GET    /api/v1/kotlin/health      Estado del servicio Kotlin
 ```
-
----
-
-## 🧪 Componente Kotlin
-
-Microservicio independiente que calcula estadísticas avanzadas de ventas consultando la BD MySQL y las expone en JSON para ser consumidas por Laravel.
-
-```bash
-# Compilar (requiere kotlinc + mysql-connector-java en classpath)
-kotlinc kotlin/StatsService.kt -include-runtime -d kotlin/stats.jar
-
-# Ejecutar (puerto 8081)
-java -jar kotlin/stats.jar
-
-# Verificar desde Laravel
-curl http://localhost:8000/api/v1/kotlin/stats
-```
-
----
-
 ## 🗂️ Estructura del proyecto
 
 ```

@@ -1,0 +1,48 @@
+@extends('layouts.app')
+@section('title','Flujo de Caja')
+@section('content')
+<div class="sec-hdr">
+  <div class="sec-title">💵 Flujo de Caja</div>
+  <div class="sec-sub">Entradas, salidas y saldo corriente del negocio</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px">
+  <div class="fcard"><div class="fcard-title">💰 Saldo actual de caja</div>
+    <div style="font-size:1.8rem;font-weight:700;color:{{ $saldoCaja>=0?'#2d7a4f':'#c0392b' }}">${{ number_format($saldoCaja,0,'.','.') }}</div></div>
+  <div class="fcard"><div class="fcard-title">📈 Ingresos históricos</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#2d7a4f">${{ number_format($totalIngresos,0,'.','.') }}</div></div>
+  <div class="fcard"><div class="fcard-title">📉 Salidas históricas</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#c0392b">${{ number_format($totalGastos,0,'.','.') }}</div></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:18px">
+  @foreach(['diario'=>'📆 Diario','semanal'=>'🗓️ Semanal','mensual'=>'📅 Mensual','anual'=>'🗓️ Anual'] as $key=>$label)
+    <a href="{{ route('flujo-caja.index', ['periodo'=>$key]) }}"
+       class="btn-p" style="{{ $periodo===$key ? '' : 'background:#8a6a50' }}">{{ $label }}</a>
+  @endforeach
+</div>
+
+<div class="card">
+  <div class="card-hdr">
+    <div class="card-title">Detalle del periodo ({{ ucfirst($periodo) }})</div>
+    <span class="chip">{{ count($flujo) }} periodos</span>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>Periodo</th><th>Entradas</th><th>Salidas</th><th>Neto</th><th>Saldo acumulado</th></tr></thead>
+    <tbody>
+      @forelse($flujo as $f)
+      <tr>
+        <td>{{ $f->periodo }}</td>
+        <td style="color:#2d7a4f;font-weight:600">+${{ number_format($f->entradas,0,'.','.') }}</td>
+        <td style="color:#c0392b;font-weight:600">-${{ number_format($f->salidas,0,'.','.') }}</td>
+        <td style="font-weight:700;color:{{ $f->neto>=0?'#2d7a4f':'#c0392b' }}">
+          {{ $f->neto>=0?'+':'' }}${{ number_format($f->neto,0,'.','.') }}</td>
+        <td style="font-weight:700">${{ number_format($f->saldo_acumulado,0,'.','.') }}</td>
+      </tr>
+      @empty
+      <tr><td colspan="5" style="text-align:center;color:#8a6a50">Sin movimientos en este periodo</td></tr>
+      @endforelse
+    </tbody>
+  </table>
+</div>
+@endsection

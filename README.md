@@ -1,4 +1,4 @@
-# 🍰 Postres Laura — Sistema de Gestión
+# 🍰 Postres — Sistema de Gestión
 
 
 Sistema web desarrollado en **Laravel 11** para la gestión integral de un emprendimiento de repostería: inventario, ventas, gastos, empleados y reportes exportables. Incluye componente **Kotlin** para estadísticas avanzadas.

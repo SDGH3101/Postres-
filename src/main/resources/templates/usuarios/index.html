@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuarios - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">👥 Gestión de Usuarios</div>
+      <div class="sec-sub">Nota: cada usuario solo puede eliminar su propia cuenta</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <a th:href="@{/usuarios/nuevo}" class="btn-p" style="text-decoration:none;">➕ Nuevo Usuario</a>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Usuarios registrados</div>
+        <span class="chip" th:text="${#lists.size(usuarios)} + ' usuarios'"></span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Edad</th><th>Registro</th><th>Rol</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr th:each="u : ${usuarios}">
+            <td th:text="${u[0]}"></td>
+            <td th:text="${u[1]}"></td>
+            <td th:text="${u[2]}"></td>
+            <td th:text="${u[3]}"></td>
+            <td th:text="${u[4]}"></td>
+            <td><span class="chip" th:text="${u[5]}"></span></td>
+            <td class="actions">
+              <a th:href="@{/usuarios/{id}(id=${u[0]})}" class="btn-e">Ver</a>
+              <span th:if="${sesionId != null and sesionId.toString() == u[0].toString()}">
+                <a th:href="@{/usuarios/{id}/editar(id=${u[0]})}" class="btn-e">Editar</a>
+                <form th:action="@{/usuarios/{id}/eliminar(id=${u[0]})}" method="post" style="display:inline"
+                      onsubmit="return confirm('¿Eliminar tu cuenta? Esta acción es irreversible.');">
+                  <button type="submit" class="btn-d">Eliminar</button>
+                </form>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

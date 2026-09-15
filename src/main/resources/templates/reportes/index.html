@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero Estratégico - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">📊 Tablero Estratégico</div>
+      <div class="sec-sub">Indicadores para la toma de decisiones</div>
+    </div>
+
+    <div class="menu-periodo">
+      <a th:each="p : ${ {'diario','semanal','mensual','anual'} }" th:href="@{/reportes(periodo=${p})}"
+         th:classappend="${p == periodo} ? 'on'" th:text="${p}"></a>
+      <span style="flex:1"></span>
+      <a th:href="@{/reportes/ventas/pdf(fechaInicio=${fechaInicio},fechaFin=${fechaFin},idEmpleado=${idEmpleado},idProducto=${idProducto})}" target="_blank" class="btn-e" style="text-decoration:none;">🖨️ Ventas PDF</a>
+      <a th:href="@{/reportes/gastos/pdf}" target="_blank" class="btn-e" style="text-decoration:none;">🖨️ Gastos PDF</a>
+      <a th:href="@{/reportes/excel(fechaInicio=${fechaInicio},fechaFin=${fechaFin},idEmpleado=${idEmpleado},idProducto=${idProducto})}" class="btn-e" style="text-decoration:none;">📊 Exportar Excel</a>
+    </div>
+
+    <!-- Filtros multicriterio -->
+    <div class="bloque">
+      <div class="card-title">🎛️ Filtros multicriterio</div>
+      <form method="get" th:action="@{/reportes}" style="display:flex;flex-wrap:wrap;gap:14px;align-items:end;">
+        <input type="hidden" name="periodo" th:value="${periodo}">
+        <div class="fg" style="margin:0;min-width:150px;">
+          <label>Desde</label>
+          <input type="date" name="fechaInicio" th:value="${fechaInicio}">
+        </div>
+        <div class="fg" style="margin:0;min-width:150px;">
+          <label>Hasta</label>
+          <input type="date" name="fechaFin" th:value="${fechaFin}">
+        </div>
+        <div class="fg" style="margin:0;min-width:180px;">
+          <label>Empleado</label>
+          <select name="idEmpleado">
+            <option value="">Todos</option>
+            <option th:each="e : ${empleadosFiltro}" th:value="${e.idUsuario}" th:text="${e.usuario.nombre}"
+                    th:selected="${idEmpleado != null and idEmpleado == e.idUsuario}"></option>
+          </select>
+        </div>
+        <div class="fg" style="margin:0;min-width:200px;">
+          <label>Producto</label>
+          <select name="idProducto">
+            <option value="">Todos</option>
+            <option th:each="p : ${productosFiltro}" th:value="${p.idProducto}" th:text="${p.descripcion}"
+                    th:selected="${idProducto != null and idProducto == p.idProducto}"></option>
+          </select>
+        </div>
+        <button type="submit" class="btn-p">Aplicar</button>
+        <a th:href="@{/reportes(periodo=${periodo})}" class="btn-e" style="text-decoration:none;">Limpiar filtros</a>
+      </form>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid kpi5">
+      <div class="kpi">
+        <div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(ingresosTotales,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">💵 Ingresos totales</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(gastosTotales,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">💸 Gastos totales</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" th:classappend="${utilidadNeta >= 0} ? 'neutral' : 'danger'"
+             th:text="'$' + ${#numbers.formatDecimal(utilidadNeta,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">🧮 Utilidad neta</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" th:text="${#numbers.formatDecimal(margenGanancia,1,'POINT',1,'COMMA')} + '%'"></div>
+        <div class="kpi-lab">📈 Margen de ganancia</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(ticketPromedio,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">🧾 Ticket promedio / venta</div>
+      </div>
+    </div>
+
+    <!-- Graficos -->
+    <div class="charts-wrap">
+      <div class="bloque" style="margin:0">
+        <div class="card-title">📈 Evolución de ventas</div>
+        <div class="chart-box"><canvas id="chartEvolucion"></canvas></div>
+      </div>
+      <div class="bloque" style="margin:0">
+        <div class="card-title">🥧 Productos más populares (ingresos)</div>
+        <div class="chart-box"><canvas id="chartTop"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="insights-grid">
+      <div class="bloque" style="margin:0">
+        <div class="card-title">👷 Ventas por empleado</div>
+        <table class="tbl">
+          <thead><tr><th>Empleado</th><th>Ventas</th><th>Ingresos</th></tr></thead>
+          <tbody>
+            <tr th:each="e : ${ventasPorEmpleado}">
+              <td th:text="${e.empleado} + ' (' + ${e.cargo} + ')'"></td>
+              <td th:text="${#numbers.formatInteger(e.total_ventas,1,'POINT')}"></td>
+              <td th:text="'$' + ${#numbers.formatDecimal(e.ingresos,1,'POINT',0,'COMMA')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(ventasPorEmpleado)}">
+              <td colspan="3" style="text-align:center;color:var(--muted)">Sin empleados registrados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bloque" style="margin:0">
+        <div class="card-title">🚫 Productos sin rotación</div>
+        <table class="tbl">
+          <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th></tr></thead>
+          <tbody>
+            <tr th:each="p : ${productosSinRotacion}">
+              <td th:text="${p.descripcion}"></td>
+              <td th:text="'$' + ${#numbers.formatDecimal(p.precio,1,'POINT',0,'COMMA')}"></td>
+              <td><span class="pill" th:classappend="${p.stock == 0} ? 'agotado' : 'bajo'" th:text="${p.stock}"></span></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(productosSinRotacion)}">
+              <td colspan="3" style="text-align:center;color:var(--muted)">Todos los productos tienen rotación.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bloque" style="margin:0">
+        <div class="card-title">🏆 Top 5 productos (para asegurar stock)</div>
+        <table class="tbl">
+          <thead><tr><th>Producto</th><th>Veces</th><th>Ingresos</th><th>Stock</th></tr></thead>
+          <tbody>
+            <tr th:each="p : ${productosMasVendidos}">
+              <td th:text="${p[0]}"></td>
+              <td th:text="${p[3]}"></td>
+              <td th:text="'$' + ${#numbers.formatDecimal(p[4],1,'POINT',0,'COMMA')}"></td>
+              <td><span class="pill" th:classappend="${p[2] <= p[3]} ? 'bajo' : 'ok'" th:text="${p[2]}"></span></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(productosMasVendidos)}">
+              <td colspan="4" style="text-align:center;color:var(--muted)">Sin ventas registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Balance y detalle (compatibilidad con reportes anteriores) -->
+    <div class="bloque">
+      <div class="card-title">Balance Ventas vs Gastos</div>
+      <table class="tbl">
+        <thead><tr><th>Periodo</th><th>Ingresos (ventas)</th><th>Gastos</th><th>Balance</th></tr></thead>
+        <tbody>
+          <tr th:each="b : ${balance}">
+            <td th:text="${b.mes}"></td>
+            <td style="color:var(--ok)" th:text="'$' + ${#numbers.formatDecimal(b.ingresos,1,'POINT',0,'COMMA')}"></td>
+            <td style="color:var(--danger)" th:text="'$' + ${#numbers.formatDecimal(b.gastos,1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(b.balance,1,'POINT',0,'COMMA')}"></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(balance)}">
+            <td colspan="4" style="text-align:center;color:var(--muted)">Sin datos para el periodo.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bloque">
+      <div class="card-title">Ventas por periodo</div>
+      <table class="tbl">
+        <thead><tr><th>Periodo</th><th>Nº ventas</th><th>Ingresos</th><th>Ticket promedio</th></tr></thead>
+        <tbody>
+          <tr th:each="m : ${ventasPorPeriodo}">
+            <td th:text="${m.mes}"></td>
+            <td th:text="${#numbers.formatInteger(m.total_ventas,1,'POINT')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(m.ingresos_mes,1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(m.ticket_promedio,1,'POINT',0,'COMMA')}"></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(ventasPorPeriodo)}">
+            <td colspan="4" style="text-align:center;color:var(--muted)">Sin ventas en el periodo.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bloque">
+      <div class="card-title">Gastos por categoría</div>
+      <table class="tbl">
+        <thead><tr><th>Categoría</th><th>Cantidad</th><th>Total</th><th>Promedio</th></tr></thead>
+        <tbody>
+          <tr th:each="g : ${gastosPorCategoria}">
+            <td><span class="chip" th:text="${g[0]}"></span></td>
+            <td th:text="${g[1]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(g[2],1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(g[3],1,'POINT',0,'COMMA')}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bloque">
+      <div class="card-title">Ventas detalladas (según filtros)</div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Productos</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr th:each="v : ${ventasFiltradas}">
+            <td th:text="${v.id_venta}"></td>
+            <td th:text="${v.fecha}"></td>
+            <td th:text="${v.empleado}"></td>
+            <td th:text="${v.producto}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(v.total,1,'POINT',0,'COMMA')}"></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(ventasFiltradas)}">
+            <td colspan="5" style="text-align:center;color:var(--muted)">No hay ventas para los filtros seleccionados.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script th:inline="javascript">
+  (function () {
+    const evo = /*[[${ventasPorPeriodo}]]*/ [];
+    const top = /*[[${productosMasVendidos}]]*/ [];
+
+    const ctxEvo = document.getElementById('chartEvolucion');
+    if (ctxEvo) {
+      new Chart(ctxEvo, {
+        type: 'line',
+        data: {
+          labels: evo.map(function (r) { return r.mes; }),
+          datasets: [
+            {
+              label: 'Ingresos ($)',
+              data: evo.map(function (r) { return Number(r.ingresos_mes) || 0; }),
+              borderColor: '#2d7a4f',
+              backgroundColor: 'rgba(45,122,79,.12)',
+              fill: true,
+              tension: .35
+            },
+            {
+              label: 'Nº de ventas',
+              data: evo.map(function (r) { return Number(r.total_ventas) || 0; }),
+              borderColor: '#c8773a',
+              backgroundColor: 'rgba(200,119,58,.10)',
+              fill: true,
+              tension: .35,
+              yAxisID: 'y2'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Ingresos ($)' } },
+            y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Ventas' } }
+          }
+        }
+      });
+    }
+
+    const ctxTop = document.getElementById('chartTop');
+    if (ctxTop) {
+      new Chart(ctxTop, {
+        type: 'doughnut',
+        data: {
+          labels: top.map(function (t) { return t[0]; }),
+          datasets: [{
+            data: top.map(function (t) { return Number(t[4]) || 0; }),
+            backgroundColor: ['#3d1f0a', '#7a3e1a', '#c8773a', '#e8a84c', '#2d7a4f']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  })();
+</script>
+</body>
+</html>

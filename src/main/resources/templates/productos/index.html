@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">📦 Inventario</div>
+      <div class="sec-sub">Gestión de productos</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <a th:href="@{/productos/nuevo}" class="btn-p" style="text-decoration:none;">➕ Nuevo Producto</a>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Productos registrados</div>
+        <span class="chip" th:text="${#lists.size(productos)} + ' productos'"></span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Descripción</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr th:each="p : ${productos}">
+            <td th:text="${p.idProducto}"></td>
+            <td th:text="${p.descripcion}"></td>
+            <td th:text="${p.tipo}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(p.precio,1,'POINT',0,'COMMA')}"></td>
+            <td th:text="${p.stock}"></td>
+            <td><span class="pill" th:classappend="${p.estadoInventario}" th:text="${p.estadoInventario}"></span></td>
+            <td class="actions">
+              <a th:href="@{/productos/{id}(id=${p.idProducto})}" class="btn-e">Ver</a>
+              <a th:href="@{/productos/{id}/editar(id=${p.idProducto})}" class="btn-e">Editar</a>
+              <form th:action="@{/productos/{id}/eliminar(id=${p.idProducto})}" method="post" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar este producto?');">
+                <button type="submit" class="btn-d">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

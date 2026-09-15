@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flujo de Caja - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">💵 Flujo de Caja</div>
+      <div class="sec-sub">Movimientos de ingresos y egresos por periodo</div>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi">
+        <div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(saldo.totalIngresos,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">Total ingresos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(saldo.totalGastos,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">Total egresos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" style="color:var(--ok)" th:text="'$' + ${#numbers.formatDecimal(saldo.saldoCaja,1,'POINT',0,'COMMA')}"></div>
+        <div class="kpi-lab">Saldo en caja</div>
+      </div>
+    </div>
+
+    <div class="menu-periodo">
+      <a th:each="p : ${periodos}" th:href="@{/flujo-caja(periodo=${p})}"
+         th:classappend="${p == periodo} ? 'on'" th:text="${p}"></a>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Movimientos por periodo</div>
+      <table class="tbl">
+        <thead><tr><th>Periodo</th><th>Entradas</th><th>Salidas</th><th>Neto</th><th>Saldo acumulado</th></tr></thead>
+        <tbody>
+          <tr th:each="m : ${movimientos}">
+            <td th:text="${m.periodo}"></td>
+            <td style="color:var(--ok)" th:text="'$' + ${#numbers.formatDecimal(m.entradas,1,'POINT',0,'COMMA')}"></td>
+            <td style="color:var(--danger)" th:text="'$' + ${#numbers.formatDecimal(m.salidas,1,'POINT',0,'COMMA')}"></td>
+            <td th:classappend="${new java.math.BigDecimal(m.neto.toString()) < 0} ? 'danger'" th:text="'$' + ${#numbers.formatDecimal(m.neto,1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(m.saldo_acumulado,1,'POINT',0,'COMMA')}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

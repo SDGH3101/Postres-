@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuevo Gasto/Compra</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+    <div class="sec-hdr"><div class="sec-title">➕ Nuevo Gasto / Compra</div></div>
+
+    <div class="fcard">
+      <form th:action="@{/compras}" method="post">
+        <div class="fgrid c2">
+          <div class="fg">
+            <label>Tipo</label>
+            <select name="tipo" id="campo-tipo" required>
+              <option value="gasto">Gasto</option>
+              <option value="compra">Compra menor</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Fecha</label>
+            <input type="date" name="fecha" th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+          </div>
+          <div class="fg">
+            <label>Descripción</label>
+            <input type="text" name="descripcion" required maxlength="200">
+          </div>
+          <div class="fg">
+            <label>Monto</label>
+            <input type="number" name="monto" step="0.01" min="0" value="0" required>
+          </div>
+          <div class="fg" id="campo-categoria-gasto">
+            <label>Categoría (gasto)</label>
+            <input type="text" name="categoria" placeholder="Ej: Materia prima">
+          </div>
+          <div class="fg" id="campo-categoria-compra">
+            <label>Categoría (compra)</label>
+            <select name="id_categoria">
+              <option value="">— Seleccionar —</option>
+              <option th:each="c : ${categorias}" th:value="${c.idCategoria}" th:text="${c.nombreCategoria}"></option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <button type="submit" class="btn-p">Guardar</button>
+          <a th:href="@{/compras}" style="color:var(--muted);margin-left:12px;">Cancelar</a>
+        </div>
+      </form>
+    </div>
+
+  <script>
+    const selTipo = document.getElementById('campo-tipo');
+    function toggleCategoria() {
+      const esGasto = selTipo.value === 'gasto';
+      document.getElementById('campo-categoria-gasto').style.display = esGasto ? '' : 'none';
+      document.getElementById('campo-categoria-compra').style.display = esGasto ? 'none' : '';
+    }
+    selTipo.addEventListener('change', toggleCategoria);
+    toggleCategoria();
+  </script>
+  </main>
+</div>
+</body>
+</html>

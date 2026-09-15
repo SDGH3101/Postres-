@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- ===== HEADER (barra superior) ===== -->
+<nav th:fragment="header" class="topnav">
+  <div class="nav-brand">🍰 Postres<em>Mariangel</em></div>
+  <div class="nav-right">
+    <div style="text-align:right">
+      <div class="nav-name" th:text="${sesionUsuario != null ? sesionUsuario.nombre : ''}"></div>
+      <span class="nav-role" th:text="${rolSesion}"></span>
+    </div>
+    <div class="nav-avatar" th:text="${sesionUsuario != null ? sesionUsuario.nombre?.substring(0,1)?.toUpperCase() : '?'}"></div>
+    <form th:action="@{/logout}" method="post" style="margin:0">
+      <button type="submit" class="btn-logout">Salir</button>
+    </form>
+  </div>
+</nav>
+
+<!-- ===== SIDEBAR ===== -->
+<div th:fragment="sidebar" class="sidebar">
+
+  <div th:if="${rolSesion != 'cliente'}">
+    <div class="sb-label">Operaciones</div>
+    <a th:href="@{/dashboard}" class="sb-item"><span>📊</span> Dashboard</a>
+    <a th:href="@{/productos}" class="sb-item"><span>📦</span> Inventario</a>
+    <a th:href="@{/compras}" class="sb-item"><span>💸</span> Gastos</a>
+    <a th:href="@{/ventas}" class="sb-item"><span>🛒</span> Ventas</a>
+  </div>
+
+  <div class="sb-label">Comercial</div>
+  <a th:href="@{/catalogo}" class="sb-item"><span>🍰</span> Catálogo</a>
+
+  <div th:if="${rolSesion == 'emprendedor'}">
+    <div class="sb-label">Administración</div>
+    <a th:href="@{/usuarios}" class="sb-item"><span>👥</span> Usuarios</a>
+    <a th:href="@{/empleados}" class="sb-item"><span>👷</span> Personal</a>
+    <a th:href="@{/reportes}" class="sb-item"><span>📈</span> Reportes</a>
+    <a th:href="@{/presupuestos}" class="sb-item"><span>🎯</span> Presupuesto</a>
+    <a th:href="@{/flujo-caja}" class="sb-item"><span>💵</span> Flujo de Caja</a>
+  </div>
+</div>
+
+<!-- ===== MENSAJES FLASH ===== -->
+<div th:fragment="alertas">
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+</div>
+
+<!-- ===== ESTRUCTURA DE PAGINA CON LAYOUT ===== -->
+<div th:fragment="layout(content)">
+  <nav th:replace="~{fragments/layout :: header}"></nav>
+  <div class="app-body">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+    <main class="main">
+      <div th:replace="~{fragments/layout :: alertas}"></div>
+      <div th:replace="${content}"></div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

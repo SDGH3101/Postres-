@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presupuestos - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<style>
+.bar-wrap{background:#f0e6da;border-radius:10px;height:10px;overflow:hidden;margin-top:6px;}
+.bar{height:100%;background:var(--accent);border-radius:10px;}
+.bar.danger{background:var(--danger);}
+</style>
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">🎯 Presupuestos</div>
+      <div class="sec-sub">Control del presupuesto por periodo</div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-title">➕ Crear Presupuesto</div>
+      <form th:action="@{/presupuestos}" method="post">
+        <div class="fgrid c3">
+          <div class="fg">
+            <label>Periodo</label>
+            <select name="tipo" required>
+              <option value="diario">Diario</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Monto</label>
+            <input type="number" name="monto" step="0.01" min="0" value="0" required>
+          </div>
+          <div class="fg">
+            <label>Fecha de inicio</label>
+            <input type="date" name="fecha_inicio" th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-p">Guardar Presupuesto</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Presupuestos activos</div>
+      <table class="tbl">
+        <thead><tr><th>Periodo</th><th>Rango vigente</th><th>Monto</th><th>Gasto real</th><th>Uso</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr th:each="p : ${presupuestos}">
+            <td><span class="chip" th:text="${p.presupuesto.tipo}"></span></td>
+            <td th:text="${p.rangoInicio} + ' → ' + ${p.rangoFin}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(p.presupuesto.monto,1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(p.gastoReal,1,'POINT',0,'COMMA')}"></td>
+            <td style="min-width:180px">
+              <span th:text="${p.porcentaje} + '%'"></span>
+              <div class="bar-wrap">
+                <div class="bar" th:classappend="${p.porcentaje > 100} ? 'danger'" th:style="'width:' + (${p.porcentaje} > 100 ? 100 : ${p.porcentaje}) + '%'"></div>
+              </div>
+            </td>
+            <td>
+              <form th:action="@{/presupuestos/{id}/eliminar(id=${p.presupuesto.idPresupuesto})}" method="post" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar presupuesto?');">
+                <button type="submit" class="btn-d">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

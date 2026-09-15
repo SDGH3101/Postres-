@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalle Usuario</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+    <div class="sec-hdr">
+      <div class="sec-title">👤 <span th:text="${usuario[1]}"></span></div>
+      <div class="sec-sub">Detalle del usuario</div>
+    </div>
+
+    <div class="fcard">
+      <p><strong>ID:</strong> <span th:text="${usuario[0]}"></span></p>
+      <p><strong>Empresa:</strong> <span th:text="${usuario[2]}"></span></p>
+      <p><strong>Cargo:</strong> <span th:text="${usuario[3]}"></span></p>
+      <p><strong>Salario:</strong> <span th:text="'$' + ${#numbers.formatDecimal(usuario[4],1,'POINT',0,'COMMA')}"></span></p>
+    </div>
+
+    <div class="actions" style="gap:8px">
+      <a th:href="@{/usuarios/{id}/editar(id=${usuarioId})}" class="btn-e">Editar datos</a>
+      <form th:if="${sesionId != null && usuarioId == sesionId}" th:action="@{/usuarios/{id}/eliminar(id=${usuarioId})}" method="post" style="display:inline"
+            onsubmit="return confirm('¿Eliminar tu cuenta? Esta acción es irreversible.');">
+        <button type="submit" class="btn-d">Eliminar mi cuenta</button>
+      </form>
+      <a th:href="@{/usuarios}" class="btn-e">← Volver</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

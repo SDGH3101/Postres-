@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postres Mariangel - Crear cuenta</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<style>.err{color:#c0392b;font-size:.8rem;margin-top:4px;display:block}</style>
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <div class="auth-brand-logo">🍰 Postres<em>Mariangel</em></div>
+  <p class="auth-sub">Sistema de Gestión · SENA 2026</p>
+
+  <div class="auth-tabs">
+    <a th:href="@{/login}" class="auth-tab">Iniciar sesión</a>
+    <a th:href="@{/register}" class="auth-tab on">Crear cuenta</a>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+  <div class="auth-head">
+    <h2>Crear cuenta 👤</h2>
+    <p>Regístrate como cliente para ver el catálogo</p>
+  </div>
+
+  <form th:action="@{/register}" th:object="${registroForm}" method="post">
+    <div class="fg">
+      <label>Nombre completo</label>
+      <input type="text" th:field="*{nombre}" placeholder="Tu nombre">
+      <span class="err" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+    </div>
+    <div class="fg">
+      <label>Correo electrónico</label>
+      <input type="email" th:field="*{correo}" placeholder="correo@email.com">
+      <span class="err" th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}"></span>
+    </div>
+    <div class="fg">
+      <label>Fecha de nacimiento</label>
+      <input type="date" th:field="*{fechaNacimiento}">
+      <span class="err" th:if="${#fields.hasErrors('fechaNacimiento')}" th:errors="*{fechaNacimiento}"></span>
+    </div>
+    <div class="fg">
+      <label>Contraseña (mínimo 6 caracteres)</label>
+      <div class="pw-wrap">
+        <input type="password" th:field="*{pass}" id="pass" placeholder="••••••••">
+        <button type="button" class="pw-toggle" onclick="togglePass('pass', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+      </div>
+      <span class="err" th:if="${#fields.hasErrors('pass')}" th:errors="*{pass}"></span>
+    </div>
+    <div class="fg">
+      <label>Confirmar contraseña</label>
+      <div class="pw-wrap">
+        <input type="password" th:field="*{passConfirmation}" id="passConfirmation" placeholder="••••••••">
+        <button type="button" class="pw-toggle" onclick="togglePass('passConfirmation', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+      </div>
+      <span class="err" th:if="${#fields.hasErrors('passConfirmation')}" th:errors="*{passConfirmation}"></span>
+    </div>
+    <button type="submit" class="btn-auth">Registrarme →</button>
+  </form>
+</div>
+<script>
+  function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+  }
+</script>
+</body>
+</html>

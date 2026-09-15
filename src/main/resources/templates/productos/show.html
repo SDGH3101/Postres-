@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalle Producto</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div sec-hdr style="margin-bottom:18px">
+      <div class="sec-title">🍰 <span th:text="${producto.descripcion}"></span></div>
+      <div class="sec-sub">Detalle del producto</div>
+    </div>
+
+    <div class="fcard">
+      <p><strong>Tipo:</strong> <span th:text="${producto.tipo}"></span></p>
+      <p><strong>Precio:</strong> <span th:text="'$' + ${#numbers.formatDecimal(producto.precio,1,'POINT',0,'COMMA')}"></span></p>
+      <p><strong>Stock:</strong> <span th:text="${producto.stock}"></span></p>
+      <p><strong>Stock mínimo:</strong> <span th:text="${producto.stockMinimo}"></span></p>
+      <p><strong>Fecha de caducidad:</strong> <span th:text="${producto.fechaCaducidad}"></span></p>
+      <p><strong>Estado:</strong> <span class="pill" th:classappend="${producto.estadoInventario}" th:text="${producto.estadoInventario}"></span></p>
+    </div>
+
+    <a th:href="@{/productos}" class="btn-e">← Volver al inventario</a>
+  </main>
+</div>
+</body>
+</html>

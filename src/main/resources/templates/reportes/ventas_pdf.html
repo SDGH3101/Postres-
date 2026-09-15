@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Ventas - Postres Mariangel</title>
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<style>body{background:#fff;padding:24px;}</style>
+</head>
+<body>
+<div class="no-print" style="margin-bottom:16px">
+  <button onclick="window.print()" class="btn-p">🖨️ Imprimir / Guardar PDF</button>
+  <a th:href="@{/reportes}" class="btn-e" style="text-decoration:none">← Volver</a>
+</div>
+
+<div class="report-logo">🍰 Postres<em>Mariangel</em></div>
+<div style="color:var(--muted);margin-bottom:18px">Reporte de Ventas · Generado el <span th:text="${#temporals.format(#temporals.createToday(), 'dd/MM/yyyy')}"></span></div>
+
+<table class="tbl">
+  <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Productos</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr th:each="v : ${ventas}">
+      <td th:text="${v.id_venta}"></td>
+      <td th:text="${v.fecha}"></td>
+      <td th:text="${v.empleado}"></td>
+      <td th:text="${v.producto}"></td>
+      <td th:text="'$' + ${#numbers.formatDecimal(v.total,1,'POINT',0,'COMMA')}"></td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

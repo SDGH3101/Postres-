@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postres Mariangel - Ingresar</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <div class="auth-brand-logo">🍰 Postres<em>Mariangel</em></div>
+  <p class="auth-sub">Sistema de Gestión · SENA 2026</p>
+
+  <div class="auth-tabs">
+    <a th:href="@{/login}" class="auth-tab on">Iniciar sesión</a>
+    <a th:href="@{/register}" class="auth-tab">Crear cuenta</a>
+  </div>
+
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+  <div class="auth-head">
+    <h2>¡Bienvenido! 👋</h2>
+    <p>Accede con tu correo y contraseña</p>
+  </div>
+
+  <form th:action="@{/login}" method="post">
+    <div class="fg">
+      <label>Correo electrónico</label>
+      <input type="email" name="correo" th:value="${correo}" placeholder="correo@email.com" required>
+    </div>
+    <div class="fg">
+      <label>Contraseña</label>
+      <div class="pw-wrap">
+        <input type="password" name="pass" id="pass" placeholder="••••••••" required>
+        <button type="button" class="pw-toggle" onclick="togglePass('pass', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+      </div>
+    </div>
+    <div class="hint-box">
+      <strong>Usuarios de prueba:</strong><br>
+      👩‍🍳 laura@postres.com / password · Emprendedor<br>
+      👷 david@postres.com / password · Empleado<br>
+      👤 maria@email.com / password · Cliente
+    </div>
+    <button type="submit" class="btn-auth">Ingresar →</button>
+  </form>
+</div>
+<script>
+  function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+  }
+</script>
+</body>
+</html>

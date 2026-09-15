@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<style>
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;}
+.cat-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.cat-emoji{font-size:2.6rem;margin-bottom:8px;}
+.cat-card h3{color:var(--cacao);font-size:1rem;margin-bottom:6px;}
+.cat-card .tipo{color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.cat-card .precio{color:var(--brand);font-weight:700;font-size:1.1rem;}
+.cat-card .stock{color:var(--muted);font-size:.78rem;margin-top:4px;}
+</style>
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+    <div class="sec-hdr">
+      <div class="sec-title">🍰 Catálogo de Productos</div>
+      <div class="sec-sub">Nuestras delicias disponibles</div>
+    </div>
+
+    <div class="cat-grid">
+      <div class="cat-card" th:each="p : ${productos}">
+        <div class="cat-emoji" th:text="${p.tipo == 'bebida'} ? '🥤' : (${p.tipo == 'otro'} ? '📦' : '🍰')"></div>
+        <h3 th:text="${p.descripcion}"></h3>
+        <div class="tipo" th:text="${p.tipo}"></div>
+        <div class="precio" th:text="'$' + ${#numbers.formatDecimal(p.precio,1,'POINT',0,'COMMA')}"></div>
+        <div class="stock" th:text="'Stock: ' + ${p.stock}"></div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

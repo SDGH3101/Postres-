@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventas - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+<style>.err{color:#c0392b;font-size:.8rem;margin-top:4px;display:block}</style>
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">🛒 Registro de Ventas</div>
+      <div class="sec-sub">Carrito multi-producto · stock e ingresos automáticos</div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-title">➕ Registrar Nueva Venta</div>
+
+      <form th:action="@{/ventas}" th:object="${ventaForm}" method="post" id="form-venta">
+        <div th:if="${#fields.hasErrors('items')}" class="alert alert-danger" th:errors="*{items}"></div>
+        <div class="fgrid c3">
+          <div class="fg">
+            <label>Empleado responsable</label>
+            <select th:field="*{idEmpleado}">
+              <option value="">— Seleccionar —</option>
+              <option th:each="e : ${empleados}" th:value="${e.idUsuario}"
+                      th:text="${e.usuario.nombre} + ' (' + ${e.cargo} + ')'"></option>
+            </select>
+            <span class="err" th:if="${#fields.hasErrors('idEmpleado')}" th:errors="*{idEmpleado}"></span>
+          </div>
+          <div class="fg">
+            <label>Fecha</label>
+            <input type="date" th:field="*{fecha}" th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}">
+            <span class="err" th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}"></span>
+          </div>
+          <div class="fg">
+            <label>Medio de pago</label>
+            <select th:field="*{medioPago}">
+              <option value="efectivo">💵 Efectivo</option>
+              <option value="transferencia_nequi">📱 Transferencia Nequi</option>
+              <option value="transferencia_daviplata">📱 Transferencia Daviplata</option>
+              <option value="transferencia_bancaria">🏦 Transferencia bancaria</option>
+              <option value="tarjeta_debito">💳 Tarjeta débito</option>
+              <option value="tarjeta_credito">💳 Tarjeta crédito</option>
+            </select>
+            <span class="err" th:if="${#fields.hasErrors('medioPago')}" th:errors="*{medioPago}"></span>
+          </div>
+        </div>
+
+        <div class="fgrid c3" style="margin-top:14px;align-items:end">
+          <div class="fg">
+            <label>Producto</label>
+            <select id="cart-producto">
+              <option value="">— Seleccionar —</option>
+              <option th:each="p : ${productos}" th:value="${p.idProducto}"
+                      th:attr="data-precio=${p.precio},data-stock=${p.stock},data-nombre=${p.descripcion}"
+                      th:text="${p.descripcion} + ' · Stock: ' + ${p.stock} + ' · $' + ${#numbers.formatDecimal(p.precio,1,'POINT',0,'COMMA')}"></option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Cantidad</label>
+            <input type="number" id="cart-cantidad" min="1" value="1">
+          </div>
+          <div class="fg">
+            <button type="button" class="btn-p" id="btn-agregar">Agregar al carrito</button>
+          </div>
+        </div>
+
+        <table class="tbl" style="margin-top:14px">
+          <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+          <tbody id="cart-body">
+            <tr id="cart-empty"><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">Carrito vacío</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="2" style="text-align:right;font-weight:600">Total</td>
+                <td id="cart-total" style="font-weight:600;color:var(--ok)">$0</td><td></td></tr>
+          </tfoot>
+        </table>
+
+        <div id="cart-inputs"></div>
+        <div style="margin-top:14px">
+          <button type="submit" class="btn-p" id="btn-registrar" disabled>Registrar Venta</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Historial de Ventas</div>
+        <span class="chip" th:text="${#lists.size(ventas)} + ' registros'"></span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Cargo</th><th>Productos</th><th>Medio de pago</th><th>Total</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr th:each="v : ${ventas}">
+            <td th:text="${v[0]}"></td>
+            <td th:text="${v[1]}"></td>
+            <td th:text="${v[2]}"></td>
+            <td><span class="chip" th:text="${v[3]}"></span></td>
+            <td th:text="${v[6]}"></td>
+            <td th:text="${v[5]}"></td>
+            <td style="color:var(--ok);font-weight:600" th:text="'$' + ${#numbers.formatDecimal(v[4],1,'POINT',0,'COMMA')}"></td>
+            <td>
+              <form th:action="@{/ventas/{id}/eliminar(id=${v[0]})}" method="post" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar venta?');">
+                <button type="submit" class="btn-d">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  <script>
+  (function () {
+    const cart = [];
+    const selProducto = document.getElementById('cart-producto');
+    const inpCantidad = document.getElementById('cart-cantidad');
+    const btnAgregar  = document.getElementById('btn-agregar');
+    const cartBody    = document.getElementById('cart-body');
+    const cartTotal   = document.getElementById('cart-total');
+    const cartInputs  = document.getElementById('cart-inputs');
+    const btnRegistrar= document.getElementById('btn-registrar');
+
+    function money(n) {
+      return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function render() {
+      cartBody.innerHTML = '';
+      cartInputs.innerHTML = '';
+      if (cart.length === 0) {
+        cartBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">Carrito vacío</td></tr>';
+        btnRegistrar.disabled = true;
+        cartTotal.textContent = '$0';
+        return;
+      }
+      let total = 0;
+      cart.forEach(function (item, i) {
+        total += item.subtotal;
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + item.nombre + '</td>' +
+          '<td>' + item.cantidad + '</td>' +
+          '<td>' + money(item.subtotal) + '</td>' +
+          '<td><button type="button" class="btn-d" data-i="' + i + '">Quitar</button></td>';
+        cartBody.appendChild(tr);
+        cartInputs.innerHTML +=
+          '<input type="hidden" name="items[' + i + '].idProducto" value="' + item.id_producto + '">' +
+          '<input type="hidden" name="items[' + i + '].cantidad" value="' + item.cantidad + '">';
+      });
+      cartTotal.textContent = money(total);
+      btnRegistrar.disabled = false;
+    }
+
+    btnAgregar.addEventListener('click', function () {
+      const opt = selProducto.options[selProducto.selectedIndex];
+      if (!selProducto.value) return;
+      const cantidad = parseInt(inpCantidad.value, 10) || 0;
+      const stock = parseInt(opt.dataset.stock, 10);
+      if (cantidad < 1) return;
+      const yaEnCarrito = cart.filter(function (i) { return String(i.id_producto) === selProducto.value; })
+        .reduce(function (s, i) { return s + i.cantidad; }, 0);
+      if (yaEnCarrito + cantidad > stock) {
+        alert('Stock insuficiente. Disponible: ' + stock + ', ya tienes ' + yaEnCarrito + ' en el carrito.');
+        return;
+      }
+      const precio = parseFloat(opt.dataset.precio);
+      cart.push({
+        id_producto: opt.value,
+        nombre: opt.dataset.nombre,
+        cantidad: cantidad,
+        precio: precio,
+        subtotal: precio * cantidad
+      });
+      inpCantidad.value = 1;
+      selProducto.value = '';
+      render();
+    });
+
+    cartBody.addEventListener('click', function (e) {
+      if (e.target.dataset.i !== undefined) {
+        cart.splice(parseInt(e.target.dataset.i, 10), 1);
+        render();
+      }
+    });
+
+    render();
+  })();
+  </script>
+  <script>
+    // Regla de negocio: bloquear fechas futuras en el frontend.
+    (function () {
+      const f = document.getElementById('fecha');
+      if (f) {
+        f.max = new Date().toISOString().split('T')[0];
+        if (f.value && f.max && f.value > f.max) f.value = f.max;
+      }
+    })();
+  </script>
+  </main>
+</div>
+</body>
+</html>

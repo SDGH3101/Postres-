@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal - Postres Mariangel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">👷 Gestión de Personal</div>
+      <div class="sec-sub">Empleados y su rendimiento</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <a th:href="@{/empleados/nuevo}" class="btn-p" style="text-decoration:none;">➕ Nuevo Empleado</a>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Empleados</div>
+        <span class="chip" th:text="${#lists.size(empleados)} + ' empleados'"></span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Cargo</th><th>Salario</th><th>Horas</th><th>Ventas</th><th>Ingresos</th><th>Días en empresa</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr th:each="e : ${empleados}">
+            <td th:text="${e[1]}"></td>
+            <td th:text="${e[2]}"></td>
+            <td><span class="chip" th:text="${e[3]}"></span></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(e[4],1,'POINT',0,'COMMA')}"></td>
+            <td th:text="${e[5]}"></td>
+            <td th:text="${e[6]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(e[7],1,'POINT',0,'COMMA')}"></td>
+            <td th:text="${e[8]}"></td>
+            <td class="actions">
+              <a th:href="@{/empleados/{id}(id=${e[0]})}" class="btn-e">Ver</a>
+              <a th:href="@{/empleados/{id}/editar(id=${e[0]})}" class="btn-e">Editar</a>
+              <form th:action="@{/empleados/{id}/eliminar(id=${e[0]})}" method="post" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar empleado?');">
+                <button type="submit" class="btn-d">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

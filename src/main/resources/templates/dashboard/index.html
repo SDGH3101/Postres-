@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postres Mariangel - Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+<div class="app-body">
+  <div th:replace="~{fragments/layout :: sidebar}"></div>
+  <main class="main">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">📊 Panel Principal</div>
+      <div class="sec-sub" th:if="${sesionUsuario != null}"
+           th:text="'Hola, ' + ${sesionUsuario?.nombre} + ' · resumen general del negocio'"></div>
+      <div class="sec-sub" th:unless="${sesionUsuario != null}">Resumen general del negocio</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val" th:text="${totalProductos}"></div><div class="kpi-lab">Productos</div></div>
+      <div class="kpi"><div class="kpi-val" th:text="${totalUsuarios}"></div><div class="kpi-lab">Usuarios</div></div>
+      <div class="kpi"><div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(totalIngresos,1,'POINT',0,'COMMA')}"></div><div class="kpi-lab">Ingresos</div></div>
+      <div class="kpi"><div class="kpi-val" th:text="'$' + ${#numbers.formatDecimal(totalGastos,1,'POINT',0,'COMMA')}"></div><div class="kpi-lab">Gastos</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">🛒 Últimas ventas</div>
+        <span class="chip">5 recientes</span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Productos</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr th:if="${#lists.isEmpty(ventasRecientes)}">
+            <td colspan="5" style="text-align:center;color:var(--muted)">Sin ventas recientes.</td>
+          </tr>
+          <tr th:each="v : ${ventasRecientes ?: {}}">
+            <td th:text="${v[0]}"></td>
+            <td th:text="${v[1]}"></td>
+            <td th:text="${v[3]}"></td>
+            <td th:text="${v[4]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(v[2],1,'POINT',0,'COMMA')}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 Ventas por mes</div>
+      <table class="tbl">
+        <thead><tr><th>Mes</th><th>Ventas</th><th>Ingresos</th><th>Ticket prom.</th></tr></thead>
+        <tbody>
+          <tr th:if="${#lists.isEmpty(ventasMes)}">
+            <td colspan="4" style="text-align:center;color:var(--muted)">Sin ventas registradas.</td>
+          </tr>
+          <tr th:each="m : ${ventasMes ?: {}}">
+            <td th:text="${m[0]}"></td>
+            <td th:text="${m[1]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(m[2],1,'POINT',0,'COMMA')}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(m[3],1,'POINT',0,'COMMA')}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Productos más vendidos</div>
+      <table class="tbl">
+        <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Veces</th><th>Ingresos</th></tr></thead>
+        <tbody>
+          <tr th:if="${#lists.isEmpty(masVendidos)}">
+            <td colspan="5" style="text-align:center;color:var(--muted)">Sin productos vendidos.</td>
+          </tr>
+          <tr th:each="p : ${masVendidos ?: {}}">
+            <td th:text="${p[0]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(p[1],1,'POINT',0,'COMMA')}"></td>
+            <td th:text="${p[2]}"></td>
+            <td th:text="${p[3]}"></td>
+            <td th:text="'$' + ${#numbers.formatDecimal(p[4],1,'POINT',0,'COMMA')}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

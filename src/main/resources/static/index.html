@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Postres Mariangel - Sistema de Gestión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    /* Estilos complementarios para la experiencia SPA */
+    .view-container { animation: fadeIn 0.18s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+    .cat-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 22px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); transition: transform 0.2s; }
+    .cat-card:hover { transform: translateY(-3px); }
+    .cat-emoji { font-size: 2.8rem; margin-bottom: 8px; }
+    .cat-card h3 { color: var(--cacao); font-size: 1.05rem; margin-bottom: 6px; }
+    .cat-card .tipo { color: var(--muted); font-size: .74rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .cat-card .precio { color: var(--brand); font-weight: 700; font-size: 1.15rem; }
+    .cat-card .stock { color: var(--muted); font-size: .78rem; margin-top: 4px; }
+    .badge-role-switch { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.76rem; cursor: pointer; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 24px; max-width: 520px; width: 92%; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    .tag-stock { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
+    .tag-stock.ok { background: #e6f4ea; color: #2d7a4f; }
+    .tag-stock.bajo { background: #fdf4e3; color: #c8931d; }
+    .tag-stock.agotado { background: #fdeceb; color: #c0392b; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =========================================================================
+    // BASE DE DATOS Y ESTADO INICIAL (Cargado de postres_java.sql)
+    // =========================================================================
+    const INITIAL_DATA = {
+      usuarios: [
+        { id: 1, nombre: 'Laura Martínez', correo: 'laura@postres.com', rol: 'emprendedor', edad: 32, fechaNacimiento: '1994-01-15', registro: '2023-01-10', descripcion: 'Dueña y repostera principal de Postres Laura' },
+        { id: 2, nombre: 'David Gómez', correo: 'david@postres.com', rol: 'empleado', cargo: 'Pastelero', salario: 1800000, horasTrabajadas: 160, edad: 25, fechaNacimiento: '1999-03-20', registro: '2023-03-15' },
+        { id: 3, nombre: 'María López', correo: 'maria@email.com', rol: 'cliente', edad: 28, fechaNacimiento: '1998-06-01', registro: '2023-06-01' }
+      ],
+      categorias: ['Lácteos', 'Harinas', 'Azúcares', 'Frutas', 'Chocolates', 'Esencias', 'Servicios', 'Nómina', 'Otros'],
+      productos: [
+        { id: 1, descripcion: 'Torta de Chocolate', tipo: 'postre', precio: 85000, stock: 12, stockMinimo: 3 },
+        { id: 2, descripcion: 'Cupcakes x6', tipo: 'postre', precio: 32000, stock: 30, stockMinimo: 5 },
+        { id: 3, descripcion: 'Cheesecake de Fresas', tipo: 'postre', precio: 68000, stock: 8, stockMinimo: 2 },
+        { id: 4, descripcion: 'Macarons x12', tipo: 'postre', precio: 45000, stock: 25, stockMinimo: 5 },
+        { id: 5, descripcion: 'Brownie de Nuez', tipo: 'postre', precio: 28000, stock: 40, stockMinimo: 5 },
+        { id: 6, descripcion: 'Torta de Tres Leches', tipo: 'postre', precio: 75000, stock: 6, stockMinimo: 2 },
+        { id: 7, descripcion: 'Limonada Natural', tipo: 'bebida', precio: 8000, stock: 50, stockMinimo: 10 },
+        { id: 8, descripcion: 'Café con Leche', tipo: 'bebida', precio: 5000, stock: 60, stockMinimo: 10 }
+      ],
+      ventas: [
+        { id: 1, fecha: '2025-01-08', empleadoId: 2, empleadoNombre: 'David Gómez', productos: 'Brownie de Nuez', total: 28000, medioPago: 'efectivo' },
+        { id: 2, fecha: '2025-01-22', empleadoId: 2, empleadoNombre: 'David Gómez', productos: 'Cupcakes x6', total: 32000, medioPago: 'transferencia_bancaria' },
+        { id: 3, fecha: '2025-02-05', empleadoId: 2, empleadoNombre: 'David Gómez', productos: 'Torta de Chocolate', total: 85000, medioPago: 'efectivo' },
+        { id: 4, fecha: '2025-02-14', empleadoId: 2, empleadoNombre: 'David Gómez', productos: 'Torta de Tres Leches', total: 75000, medioPago: 'tarjeta_credito' },
+        { id: 5, fecha: '2025-02-28', empleadoId: 2, empleadoNombre: 'David Gómez', productos: 'Cheesecake de Fresas', total: 68000, medioPago: 'transferencia_nequi' }
+      ],
+      gastos: [
+        { id: 1, fecha: '2025-01-10', descripcion: 'Luz y agua energía', categoria: 'Servicios', monto: 180000, presupuesto: 200000 },
+        { id: 2, fecha: '2025-01-15', descripcion: 'Fresas frescas 2kg', categoria: 'Frutas', monto: 18000, presupuesto: 25000 },
+        { id: 3, fecha: '2025-02-01', descripcion: 'Salario David febrero', categoria: 'Nómina', monto: 1800000, presupuesto: 1800000 },
+        { id: 4, fecha: '2025-02-05', descripcion: 'Harina especial repostera 25kg', categoria: 'Harinas', monto: 92000, presupuesto: 100000 },
+        { id: 5, fecha: '2025-02-12', descripcion: 'Chocolate cobertura belga', categoria: 'Chocolates', monto: 120000, presupuesto: 130000 }
+      ],
+      presupuestos: [
+        { id: 1, mes: '2025-01', categoria: 'Insumos', monto: 600000, gastado: 480000 },
+        { id: 2, mes: '2025-01', categoria: 'Servicios', monto: 200000, gastado: 180000 },
+        { id: 3, mes: '2025-02', categoria: 'Insumos', monto: 750000, gastado: 620000 },
+        { id: 4, mes: '2025-02', categoria: 'Nómina', monto: 1800000, gastado: 1800000 }
+      ]
+    };
+
+    // Almacenamiento local para persistencia entre recargas
+    function getStore() {
+      const data = localStorage.getItem('pm_store');
+      if (data) {
+        try { return JSON.parse(data); } catch(e) {}
+      }
+      localStorage.setItem('pm_store', JSON.stringify(INITIAL_DATA));
+      return JSON.parse(JSON.stringify(INITIAL_DATA));
+    }
+    function saveStore(data) {
+      localStorage.setItem('pm_store', JSON.stringify(data));
+    }
+
+    // Sesión activa (Por defecto Emprendedor Laura)
+    let currentUser = JSON.parse(localStorage.getItem('pm_user')) || INITIAL_DATA.usuarios[0];
+    function setCurrentUser(user) {
+      currentUser = user;
+      localStorage.setItem('pm_user', JSON.stringify(user));
+      render();
+    }
+
+    // Enrutador cliente SPA
+    let currentRoute = window.location.pathname.replace(/^\/+/,'').replace(/\/+$/,'') || 'dashboard';
+    window.addEventListener('popstate', () => {
+      currentRoute = window.location.pathname.replace(/^\/+/,'').replace(/\/+$/,'') || 'dashboard';
+      render();
+    });
+
+    function navigate(route, e) {
+      if (e) e.preventDefault();
+      currentRoute = route.replace(/^\/+/,'').replace(/\/+$/,'') || 'dashboard';
+      window.history.pushState({}, '', '/' + currentRoute);
+      render();
+    }
+
+    function formatPesos(val) {
+      return '$' + Number(val || 0).toLocaleString('es-CO');
+    }
+
+    // Estado del carrito de ventas
+    let ventaCart = [];
+
+    // =========================================================================
+    // VISTAS DEL SISTEMA
+    // =========================================================================
+
+    // 1. Dashboard
+    function renderDashboard(store) {
+      const totalProds = store.productos.length;
+      const totalUsers = store.usuarios.length;
+      const totalIngresos = store.ventas.reduce((a, b) => a + (Number(b.total) || 0), 0);
+      const totalGastos = store.gastos.reduce((a, b) => a + (Number(b.monto) || 0), 0);
+      const ultimasVentas = store.ventas.slice(-5).reverse();
+
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">📊 Panel Principal</div>
+          <div class="sec-sub">Hola, ${currentUser.nombre} (${currentUser.rol.toUpperCase()}) · Resumen general del negocio</div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-val">${totalProds}</div><div class="kpi-lab">Productos</div></div>
+          <div class="kpi"><div class="kpi-val">${totalUsers}</div><div class="kpi-lab">Usuarios</div></div>
+          <div class="kpi"><div class="kpi-val" style="color:var(--ok)">${formatPesos(totalIngresos)}</div><div class="kpi-lab">Ingresos</div></div>
+          <div class="kpi"><div class="kpi-val" style="color:var(--danger)">${formatPesos(totalGastos)}</div><div class="kpi-lab">Gastos</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">🛒 Últimas Ventas</div>
+            <span class="chip">${ultimasVentas.length} recientes</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Productos</th><th>Medio de Pago</th><th>Total</th></tr></thead>
+            <tbody>
+              ${ultimasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--muted)">Sin ventas aún</td></tr>' : 
+                ultimasVentas.map(v => `
+                  <tr>
+                    <td>#${v.id}</td>
+                    <td>${v.fecha}</td>
+                    <td>${v.empleadoNombre}</td>
+                    <td><strong>${v.productos}</strong></td>
+                    <td><span class="chip">${v.medioPago}</span></td>
+                    <td style="font-weight:700;color:var(--ok)">${formatPesos(v.total)}</td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">🍰 Productos Destacados</div>
+            <a href="/productos" onclick="navigate('productos', event)" class="btn-e">Gestionar inventario</a>
+          </div>
+          <div class="cat-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+            ${store.productos.slice(0, 4).map(p => `
+              <div class="cat-card">
+                <div class="cat-emoji">${p.tipo === 'bebida' ? '🥤' : '🍰'}</div>
+                <h3>${p.descripcion}</h3>
+                <div class="precio">${formatPesos(p.precio)}</div>
+                <div class="stock">Disponibles: ${p.stock}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Catálogo Comercial
+    function renderCatalogo(store) {
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">🍰 Catálogo de Productos</div>
+          <div class="sec-sub">Nuestras delicias y repostería disponibles para entrega inmediata</div>
+        </div>
+
+        <div class="cat-grid">
+          ${store.productos.map(p => `
+            <div class="cat-card">
+              <div class="cat-emoji">${p.tipo === 'bebida' ? '🥤' : (p.tipo === 'otro' ? '📦' : '🍰')}</div>
+              <h3>${p.descripcion}</h3>
+              <div class="tipo">${p.tipo}</div>
+              <div class="precio">${formatPesos(p.precio)}</div>
+              <div class="stock">Stock disponible: <strong>${p.stock}</strong></div>
+              <button class="btn-p" style="margin-top:12px;width:100%" onclick="agregarVentaRapida(${p.id})">Pedir / Registrar</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // 3. Inventario / Productos
+    function renderProductos(store) {
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">📦 Inventario de Productos</div>
+          <div class="sec-sub">Control de existencias, precios y límites mínimos</div>
+        </div>
+
+        <div style="margin-bottom:16px;display:flex;gap:12px;">
+          <button class="btn-p" onclick="abrirModalProducto()">➕ Nuevo Producto</button>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Listado de Productos Registrados</div>
+            <span class="chip">${store.productos.length} productos</span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr><th>ID</th><th>Descripción</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Stock Mín.</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              ${store.productos.map(p => {
+                let estadoClass = 'ok';
+                let estadoText = 'Normal';
+                if (p.stock <= 0) { estadoClass = 'agotado'; estadoText = 'Agotado'; }
+                else if (p.stock <= p.stockMinimo) { estadoClass = 'bajo'; estadoText = 'Stock Bajo'; }
+
+                return `
+                  <tr>
+                    <td>#${p.id}</td>
+                    <td><strong>${p.descripcion}</strong></td>
+                    <td><span class="chip">${p.tipo}</span></td>
+                    <td style="font-weight:600">${formatPesos(p.precio)}</td>
+                    <td>${p.stock}</td>
+                    <td>${p.stockMinimo}</td>
+                    <td><span class="tag-stock ${estadoClass}">${estadoText}</span></td>
+                    <td class="actions">
+                      <button class="btn-e" onclick="ajustarStock(${p.id}, 1)">+1</button>
+                      <button class="btn-e" onclick="ajustarStock(${p.id}, -1)">-1</button>
+                      <button class="btn-d" onclick="eliminarProducto(${p.id})">Eliminar</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 4. Registro y Módulo de Ventas
+    function renderVentas(store) {
+      const empleados = store.usuarios.filter(u => u.rol === 'empleado' || u.rol === 'emprendedor');
+      const totalVenta = ventaCart.reduce((sum, item) => sum + item.subtotal, 0);
+
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">🛒 Registro de Ventas</div>
+          <div class="sec-sub">Carrito multi-producto · Salida de stock e ingresos inmediatos</div>
+        </div>
+
+        <div class="fcard">
+          <div class="fcard-title">➕ Registrar Nueva Venta</div>
+          <form id="form-nueva-venta" onsubmit="guardarVenta(event)">
+            <div class="fgrid c3">
+              <div class="fg">
+                <label>Empleado Responsable</label>
+                <select id="venta-empleado" required>
+                  ${empleados.map(e => `<option value="${e.id}">${e.nombre} (${e.cargo || e.rol})</option>`).join('')}
+                </select>
+              </div>
+              <div class="fg">
+                <label>Fecha</label>
+                <input type="date" id="venta-fecha" value="${new Date().toISOString().split('T')[0]}" required>
+              </div>
+              <div class="fg">
+                <label>Medio de Pago</label>
+                <select id="venta-pago" required>
+                  <option value="efectivo">💵 Efectivo</option>
+                  <option value="transferencia_nequi">📱 Nequi</option>
+                  <option value="transferencia_daviplata">📱 Daviplata</option>
+                  <option value="transferencia_bancaria">🏦 Bancolombia</option>
+                  <option value="tarjeta_debito">💳 Débito</option>
+                  <option value="tarjeta_credito">💳 Crédito</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="fgrid c3" style="margin-top:14px;align-items:end">
+              <div class="fg">
+                <label>Seleccionar Producto</label>
+                <select id="cart-item-prod">
+                  <option value="">— Elegir producto —</option>
+                  ${store.productos.map(p => `
+                    <option value="${p.id}" ${p.stock <= 0 ? 'disabled' : ''}>
+                      ${p.descripcion} · Stock: ${p.stock} (${formatPesos(p.precio)})
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+              <div class="fg">
+                <label>Cantidad</label>
+                <input type="number" id="cart-item-cant" min="1" value="1">
+              </div>
+              <div class="fg">
+                <button type="button" class="btn-p" onclick="agregarAlCarrito()">➕ Añadir al Carrito</button>
+              </div>
+            </div>
+
+            <table class="tbl" style="margin-top:14px">
+              <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th><th></th></tr></thead>
+              <tbody>
+                ${ventaCart.length === 0 ? 
+                  '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">Carrito vacío. Selecciona un producto arriba.</td></tr>' :
+                  ventaCart.map((it, idx) => `
+                    <tr>
+                      <td><strong>${it.descripcion}</strong></td>
+                      <td>${it.cantidad}</td>
+                      <td>${formatPesos(it.precio)}</td>
+                      <td style="font-weight:700;color:var(--ok)">${formatPesos(it.subtotal)}</td>
+                      <td><button type="button" class="btn-d" onclick="quitarDelCarrito(${idx})">Quitar</button></td>
+                    </tr>
+                  `).join('')
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" style="text-align:right;font-weight:700;font-size:1.05rem;">TOTAL:</td>
+                  <td style="font-weight:900;color:var(--ok);font-size:1.15rem;">${formatPesos(totalVenta)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div style="margin-top:18px">
+              <button type="submit" class="btn-p" style="padding:12px 24px;font-size:0.95rem" ${ventaCart.length === 0 ? 'disabled' : ''}>
+                ✔ Completar y Guardar Venta
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Historial de Ventas Realizadas</div>
+            <span class="chip">${store.ventas.length} registros</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Fecha</th><th>Empleado</th><th>Productos Vendidos</th><th>Medio de Pago</th><th>Total</th></tr></thead>
+            <tbody>
+              ${store.ventas.slice().reverse().map(v => `
+                <tr>
+                  <td>#${v.id}</td>
+                  <td>${v.fecha}</td>
+                  <td>${v.empleadoNombre}</td>
+                  <td>${v.productos}</td>
+                  <td><span class="chip">${v.medioPago}</span></td>
+                  <td style="font-weight:700;color:var(--ok)">${formatPesos(v.total)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 5. Gastos y Compras
+    function renderGastos(store) {
+      const totalGastos = store.gastos.reduce((a, b) => a + Number(b.monto), 0);
+
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">💸 Gestión de Gastos y Compras</div>
+          <div class="sec-sub">Registro de egresos operativos, insumos y servicios</div>
+        </div>
+
+        <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="kpi"><div class="kpi-val" style="color:var(--danger)">${formatPesos(totalGastos)}</div><div class="kpi-lab">Total Gastos Acumulados</div></div>
+          <div class="kpi"><div class="kpi-val">${store.gastos.length}</div><div class="kpi-lab">Registros de Gasto</div></div>
+        </div>
+
+        <div class="fcard">
+          <div class="fcard-title">➕ Registrar Nuevo Gasto</div>
+          <form onsubmit="guardarGasto(event)">
+            <div class="fgrid c3">
+              <div class="fg">
+                <label>Descripción</label>
+                <input type="text" id="gasto-desc" placeholder="Ej. Chocolate, Luz, Harina..." required>
+              </div>
+              <div class="fg">
+                <label>Categoría</label>
+                <select id="gasto-cat">
+                  ${store.categorias.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+              </div>
+              <div class="fg">
+                <label>Fecha</label>
+                <input type="date" id="gasto-fecha" value="${new Date().toISOString().split('T')[0]}" required>
+              </div>
+            </div>
+            <div class="fgrid c2">
+              <div class="fg">
+                <label>Monto Real ($)</label>
+                <input type="number" id="gasto-monto" min="0" placeholder="0" required>
+              </div>
+              <div class="fg">
+                <label>Presupuesto Estimado ($)</label>
+                <input type="number" id="gasto-presupuesto" min="0" placeholder="0">
+              </div>
+            </div>
+            <button type="submit" class="btn-p">Registrar Gasto</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Listado de Gastos</div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>ID</th><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Monto</th><th>Presupuesto</th><th>Diferencia</th><th>Acciones</th></tr></thead>
+            <tbody>
+              ${store.gastos.slice().reverse().map(g => {
+                const dif = (g.presupuesto || 0) - g.monto;
+                return `
+                  <tr>
+                    <td>#${g.id}</td>
+                    <td>${g.fecha}</td>
+                    <td><strong>${g.descripcion}</strong></td>
+                    <td><span class="chip">${g.categoria}</span></td>
+                    <td style="font-weight:700;color:var(--danger)">${formatPesos(g.monto)}</td>
+                    <td>${formatPesos(g.presupuesto || 0)}</td>
+                    <td style="color:${dif >= 0 ? 'var(--ok)' : 'var(--danger)'}">${formatPesos(dif)}</td>
+                    <td><button class="btn-d" onclick="eliminarGasto(${g.id})">Eliminar</button></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 6. Flujo de Caja
+    function renderFlujoCaja(store) {
+      const ingresos = store.ventas.reduce((a, b) => a + Number(b.total), 0);
+      const egresos = store.gastos.reduce((a, b) => a + Number(b.monto), 0);
+      const saldo = ingresos - egresos;
+
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">💵 Flujo de Caja</div>
+          <div class="sec-sub">Movimientos consolidados de ingresos y egresos del negocio</div>
+        </div>
+
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="kpi">
+            <div class="kpi-val" style="color:var(--ok)">${formatPesos(ingresos)}</div>
+            <div class="kpi-lab">Total Ingresos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val" style="color:var(--danger)">${formatPesos(egresos)}</div>
+            <div class="kpi-lab">Total Egresos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val" style="color:${saldo >= 0 ? 'var(--brand)' : 'var(--danger)'}">${formatPesos(saldo)}</div>
+            <div class="kpi-lab">Saldo Disponible en Caja</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Resumen Financiero</div>
+          <p style="color:var(--text);margin-bottom:14px;line-height:1.6">
+            El balance neto actual de la pastelería refleja una diferencia de <strong>${formatPesos(saldo)}</strong> entre las ventas registradas y los gastos declarados.
+          </p>
+        </div>
+      `;
+    }
+
+    // 7. Tablero Estratégico y Reportes
+    function renderReportes(store) {
+      const ingresos = store.ventas.reduce((a, b) => a + Number(b.total), 0);
+      const egresos = store.gastos.reduce((a, b) => a + Number(b.monto), 0);
+      const utilidad = ingresos - egresos;
+      const margen = ingresos > 0 ? ((utilidad / ingresos) * 100).toFixed(1) : 0;
+      const ticketPromedio = store.ventas.length > 0 ? (ingresos / store.ventas.length).toFixed(0) : 0;
+
+      setTimeout(() => initCharts(store), 50);
+
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">📊 Tablero Estratégico y Reportes</div>
+          <div class="sec-sub">Métricas de rentabilidad y visualización gráfica para la toma de decisiones</div>
+        </div>
+
+        <div class="kpi-grid kpi5">
+          <div class="kpi"><div class="kpi-val" style="color:var(--ok)">${formatPesos(ingresos)}</div><div class="kpi-lab">Ingresos Totales</div></div>
+          <div class="kpi"><div class="kpi-val" style="color:var(--danger)">${formatPesos(egresos)}</div><div class="kpi-lab">Gastos Totales</div></div>
+          <div class="kpi"><div class="kpi-val">${formatPesos(utilidad)}</div><div class="kpi-lab">Utilidad Neta</div></div>
+          <div class="kpi"><div class="kpi-val">${margen}%</div><div class="kpi-lab">Margen Operativo</div></div>
+          <div class="kpi"><div class="kpi-val">${formatPesos(ticketPromedio)}</div><div class="kpi-lab">Ticket Promedio</div></div>
+        </div>
+
+        <div class="charts-wrap">
+          <div class="bloque" style="margin:0">
+            <div class="card-title">📈 Evolución de Ventas vs Gastos</div>
+            <div class="chart-box"><canvas id="chartEvolucion"></canvas></div>
+          </div>
+          <div class="bloque" style="margin:0">
+            <div class="card-title">🥧 Distribución de Productos</div>
+            <div class="chart-box"><canvas id="chartTop"></canvas></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 8. Gestión de Usuarios y Personal
+    function renderUsuarios(store) {
+      return `
+        <div class="sec-hdr">
+          <div class="sec-title">👥 Gestión de Usuarios y Personal</div>
+          <div class="sec-sub">Roles de acceso al sistema: Emprendedor, Empleado y Cliente</div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Usuarios Activos</div>
+            <span class="chip">${store.usuarios.length} registrados</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Cargo / Detalle</th><th>Acción</th></tr></thead>
+            <tbody>
+              ${store.usuarios.map(u => `
+                <tr>
+                  <td>#${u.id}</td>
+                  <td><strong>${u.nombre}</strong></td>
+                  <td>${u.correo}</td>
+                  <td><span class="chip">${u.rol.toUpperCase()}</span></td>
+                  <td>${u.cargo || u.descripcion || 'Cliente'}</td>
+                  <td>
+                    <button class="btn-e" onclick="cambiarSesionUsuario(${u.id})">Simular Login</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Renderizado principal
+    function render() {
+      const store = getStore();
+      const app = document.getElementById('app');
+
+      let viewContent = '';
+      if (currentRoute === 'dashboard') viewContent = renderDashboard(store);
+      else if (currentRoute === 'catalogo') viewContent = renderCatalogo(store);
+      else if (currentRoute === 'productos') viewContent = renderProductos(store);
+      else if (currentRoute === 'ventas') viewContent = renderVentas(store);
+      else if (currentRoute === 'compras') viewContent = renderGastos(store);
+      else if (currentRoute === 'flujo-caja') viewContent = renderFlujoCaja(store);
+      else if (currentRoute === 'reportes') viewContent = renderReportes(store);
+      else if (currentRoute === 'usuarios' || currentRoute === 'empleados') viewContent = renderUsuarios(store);
+      else viewContent = renderDashboard(store);
+
+      const navItems = [
+        { route: 'dashboard', label: '📊 Dashboard', roles: ['emprendedor', 'empleado'] },
+        { route: 'productos', label: '📦 Inventario', roles: ['emprendedor', 'empleado'] },
+        { route: 'ventas', label: '🛒 Ventas', roles: ['emprendedor', 'empleado'] },
+        { route: 'compras', label: '💸 Gastos', roles: ['emprendedor'] },
+        { route: 'catalogo', label: '🍰 Catálogo', roles: ['emprendedor', 'empleado', 'cliente'] },
+        { route: 'reportes', label: '📈 Reportes', roles: ['emprendedor'] },
+        { route: 'flujo-caja', label: '💵 Flujo de Caja', roles: ['emprendedor'] },
+        { route: 'usuarios', label: '👥 Usuarios', roles: ['emprendedor'] }
+      ];
+
+      app.innerHTML = `
+        <nav class="topnav">
+          <div class="nav-brand" style="cursor:pointer" onclick="navigate('dashboard', event)">
+            🍰 Postres<em>Mariangel</em>
+          </div>
+          <div class="nav-right">
+            <div style="text-align:right">
+              <div class="nav-name">${currentUser.nombre}</div>
+              <span class="nav-role">${currentUser.rol}</span>
+            </div>
+            <div class="nav-avatar">${currentUser.nombre.charAt(0).toUpperCase()}</div>
+            <select class="badge-role-switch" onchange="cambiarSesionUsuario(this.value)">
+              ${store.usuarios.map(u => `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>👤 ${u.nombre} (${u.rol})</option>`).join('')}
+            </select>
+          </div>
+        </nav>
+
+        <div class="app-body">
+          <div class="sidebar">
+            <div class="sb-label">Navegación</div>
+            ${navItems.map(item => `
+              <a href="/${item.route}" onclick="navigate('${item.route}', event)" class="sb-item ${currentRoute === item.route ? 'active' : ''}">
+                ${item.label}
+              </a>
+            `).join('')}
+          </div>
+
+          <main class="main view-container">
+            ${viewContent}
+          </main>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // ACCIONES Y MANIPULADORES
+    // =========================================================================
+
+    function cambiarSesionUsuario(id) {
+      const store = getStore();
+      const user = store.usuarios.find(u => u.id == id);
+      if (user) setCurrentUser(user);
+    }
+
+    function ajustarStock(id, delta) {
+      const store = getStore();
+      const p = store.productos.find(x => x.id === id);
+      if (p) {
+        p.stock = Math.max(0, p.stock + delta);
+        saveStore(store);
+        render();
+      }
+    }
+
+    function eliminarProducto(id) {
+      if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
+      const store = getStore();
+      store.productos = store.productos.filter(x => x.id !== id);
+      saveStore(store);
+      render();
+    }
+
+    function abrirModalProducto() {
+      const desc = prompt('Nombre o descripción del producto:');
+      if (!desc) return;
+      const precio = Number(prompt('Precio en pesos ($):', '35000')) || 0;
+      const stock = Number(prompt('Stock inicial:', '10')) || 0;
+      const tipo = prompt('Tipo (postre, bebida, otro):', 'postre') || 'postre';
+
+      const store = getStore();
+      const newId = store.productos.length ? Math.max(...store.productos.map(p => p.id)) + 1 : 1;
+      store.productos.push({ id: newId, descripcion: desc, tipo, precio, stock, stockMinimo: 3 });
+      saveStore(store);
+      render();
+    }
+
+    function agregarAlCarrito() {
+      const prodId = Number(document.getElementById('cart-item-prod').value);
+      const cant = Number(document.getElementById('cart-item-cant').value) || 1;
+      if (!prodId) { alert('Selecciona un producto'); return; }
+
+      const store = getStore();
+      const p = store.productos.find(x => x.id === prodId);
+      if (!p) return;
+      if (cant > p.stock) { alert('No hay suficiente stock disponible (máx ' + p.stock + ')'); return; }
+
+      const exist = ventaCart.find(it => it.idProducto === prodId);
+      if (exist) {
+        exist.cantidad += cant;
+        exist.subtotal = exist.cantidad * exist.precio;
+      } else {
+        ventaCart.push({ idProducto: p.id, descripcion: p.descripcion, precio: p.precio, cantidad: cant, subtotal: cant * p.precio });
+      }
+      render();
+    }
+
+    function quitarDelCarrito(idx) {
+      ventaCart.splice(idx, 1);
+      render();
+    }
+
+    function agregarVentaRapida(prodId) {
+      navigate('ventas');
+      setTimeout(() => {
+        const select = document.getElementById('cart-item-prod');
+        if (select) {
+          select.value = prodId;
+          agregarAlCarrito();
+        }
+      }, 50);
+    }
+
+    function guardarVenta(e) {
+      e.preventDefault();
+      if (ventaCart.length === 0) return;
+      const store = getStore();
+      const empId = Number(document.getElementById('venta-empleado').value);
+      const emp = store.usuarios.find(u => u.id === empId) || currentUser;
+      const fecha = document.getElementById('venta-fecha').value;
+      const pago = document.getElementById('venta-pago').value;
+      const total = ventaCart.reduce((s, it) => s + it.subtotal, 0);
+      const descripProds = ventaCart.map(it => `${it.descripcion} (x${it.cantidad})`).join(', ');
+
+      // Reducir stock
+      ventaCart.forEach(it => {
+        const prod = store.productos.find(p => p.id === it.idProducto);
+        if (prod) prod.stock = Math.max(0, prod.stock - it.cantidad);
+      });
+
+      const nextId = store.ventas.length ? Math.max(...store.ventas.map(v => v.id)) + 1 : 1;
+      store.ventas.push({
+        id: nextId,
+        fecha,
+        empleadoId: emp.id,
+        empleadoNombre: emp.nombre,
+        productos: descripProds,
+        total,
+        medioPago: pago
+      });
+
+      ventaCart = [];
+      saveStore(store);
+      alert('¡Venta registrada con éxito por ' + formatPesos(total) + '!');
+      render();
+    }
+
+    function guardarGasto(e) {
+      e.preventDefault();
+      const desc = document.getElementById('gasto-desc').value;
+      const cat = document.getElementById('gasto-cat').value;
+      const fecha = document.getElementById('gasto-fecha').value;
+      const monto = Number(document.getElementById('gasto-monto').value) || 0;
+      const pres = Number(document.getElementById('gasto-presupuesto').value) || monto;
+
+      const store = getStore();
+      const nextId = store.gastos.length ? Math.max(...store.gastos.map(g => g.id)) + 1 : 1;
+      store.gastos.push({ id: nextId, fecha, descripcion: desc, categoria: cat, monto, presupuesto: pres });
+      saveStore(store);
+      alert('Gasto guardado correctamente');
+      render();
+    }
+
+    function eliminarGasto(id) {
+      if (!confirm('¿Eliminar registro de gasto?')) return;
+      const store = getStore();
+      store.gastos = store.gastos.filter(g => g.id !== id);
+      saveStore(store);
+      render();
+    }
+
+    // Inicializador de gráficos Chart.js
+    let chartEvInstance = null;
+    let chartTopInstance = null;
+    function initCharts(store) {
+      const ctxEv = document.getElementById('chartEvolucion');
+      const ctxTop = document.getElementById('chartTop');
+      if (!ctxEv || !ctxTop) return;
+
+      if (chartEvInstance) chartEvInstance.destroy();
+      if (chartTopInstance) chartTopInstance.destroy();
+
+      chartEvInstance = new Chart(ctxEv, {
+        type: 'bar',
+        data: {
+          labels: ['Octubre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero'],
+          datasets: [
+            { label: 'Ingresos ($)', data: [117000, 113000, 160000, 60000, 228000], backgroundColor: '#7a3e1a' },
+            { label: 'Gastos ($)', data: [198000, 372000, 1835000, 198000, 2012000], backgroundColor: '#c0392b' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      chartTopInstance = new Chart(ctxTop, {
+        type: 'doughnut',
+        data: {
+          labels: store.productos.slice(0, 5).map(p => p.descripcion),
+          datasets: [{
+            data: store.productos.slice(0, 5).map(p => p.precio * p.stock),
+            backgroundColor: ['#3d1f0a', '#7a3e1a', '#c8773a', '#e8a84c', '#8a6a50']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    // Iniciar aplicación
+    window.addEventListener('DOMContentLoaded', render);
+    render();
+  </script>
+</body>
+</html>

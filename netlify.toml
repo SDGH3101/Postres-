@@ -1,0 +1,14 @@
+# ==============================================================================
+# Netlify Configuration File (netlify.toml)
+# Configuración para despliegue y reescritura de rutas
+# ==============================================================================
+
+[build]
+  publish = "src/main/resources/static"
+
+# Regla de reescritura SPA hacia /index.html con código 200
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false

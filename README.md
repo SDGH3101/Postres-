@@ -2,6 +2,7 @@
 
 
 Sistema web desarrollado en **Laravel 11** para la gestión integral de un emprendimiento de repostería: inventario, ventas, gastos, empleados y reportes exportables. Incluye componente **Kotlin** para estadísticas avanzadas.
+Tambien se relizaron migraciones a java y actualmente se esta trabajando en python 
 
 ---
 
